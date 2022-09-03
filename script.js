@@ -1,132 +1,117 @@
-//1
-const balance = document.getElementById(
-  "balance"
-);
-const money_plus = document.getElementById(
-  "money-plus"
-);
-const money_minus = document.getElementById(
-  "money-minus"
-);
-const list = document.getElementById("list");
-const form = document.getElementById("form");
-const text = document.getElementById("text");
-const amount = document.getElementById("amount");
-// const dummyTransactions = [
-//   { id: 1, text: "Flower", amount: -20 },
-//   { id: 2, text: "Salary", amount: 300 },
-//   { id: 3, text: "Book", amount: -10 },
-//   { id: 4, text: "Camera", amount: 150 },
-// ];
-
-// let transactions = dummyTransactions;
-
-//last 
-const localStorageTransactions = JSON.parse(localStorage.getItem('transactions'));
-
-let transactions = localStorage.getItem('transactions') !== null ? localStorageTransactions : [];
-
-//5
-//Add Transaction
-function addTransaction(e){
-  e.preventDefault();
-  if(text.value.trim() === '' || amount.value.trim() === ''){
-    alert('please add text and amount')
-  }else{
-    const transaction = {
-      id:generateID(),
-      text:text.value,
-      amount:+amount.value
+async function saveToLocalStorage(event) {
+    event.preventDefault();
+    try {
+      const experience = event.target.experience.value;
+      const description = event.target.description.value;
+      const category = event.target.category.value;
+      const obj = { experience, description, category };
+      let res = await axios.post(
+        "https://crudcrud.com/api/5092b59ed9814a54908880102ded62e5/appointmentData",
+        obj
+      );
+      if (res.status === 201) {
+        showNewUserOnScreen(res.data);
+      }
+    } catch (error) {
+      console.log();
     }
-
-    transactions.push(transaction);
-
-    addTransactionDOM(transaction);
-    updateValues();
-    updateLocalStorage();
-    text.value='';
-    amount.value='';
+    // localStorage.setItem(obj.experience, JSON.stringify(obj))
+    // showNewUserOnScreen(obj)
   }
-}
-
-
-//5.5
-//Generate Random ID
-function generateID(){
-  return Math.floor(Math.random()*1000000000);
-}
-
-//2
-
-//Add Trasactions to DOM list
-function addTransactionDOM(transaction) {
-  //GET sign
-  const sign = transaction.amount < 0 ? "-" : "+";
-  const item = document.createElement("li");
-
-  //Add Class Based on Value
-  item.classList.add(
-    transaction.amount < 0 ? "minus" : "plus"
-  );
-
-  item.innerHTML = `
-    ${transaction.text} <span>${sign}${Math.abs(
-    transaction.amount
-  )}</span>
-    <button class="delete-btn" onclick="removeTransaction(${transaction.id})">x</button>
-    `;
-  list.appendChild(item);
-}
-
-//4
-
-//Update the balance income and expence
-function updateValues() {
-  const amounts = transactions.map(
-    (transaction) => transaction.amount
-  );
-  const total = amounts
-    .reduce((acc, item) => (acc += item), 0)
-    .toFixed(2);
-  const income = amounts
-    .filter((item) => item > 0)
-    .reduce((acc, item) => (acc += item), 0)
-    .toFixed(2);
-  const expense =
-    (amounts
-      .filter((item) => item < 0)
-      .reduce((acc, item) => (acc += item), 0) *
-    -1).toFixed(2);
-
-    balance.innerText=`$${total}`;
-    money_plus.innerText = `$${income}`;
-    money_minus.innerText = `$${expense}`;
-}
-
-
-//6 
-
-//Remove Transaction by ID
-function removeTransaction(id){
-  transactions = transactions.filter(transaction => transaction.id !== id);
-  updateLocalStorage();
-  Init();
-}
-//last
-//update Local Storage Transaction
-function updateLocalStorage(){
-  localStorage.setItem('transactions',JSON.stringify(transactions));
-}
-
-//3
-
-//Init App
-function Init() {
-  list.innerHTML = "";
-  transactions.forEach(addTransactionDOM);
-  updateValues();
-}
-
-Init();
-
-form.addEventListener('submit',addTransaction);
+  
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      let res = await axios.get(
+        "https://crudcrud.com/api/5092b59ed9814a54908880102ded62e5/appointmentData"
+      );
+      if (res.status === 200) {
+        for (var i = 0; i < res.data.length; i++) {
+          showNewUserOnScreen(res.data[i]);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    // const localStorageObj = localStorage
+    // const localStorageKeys = Object.keys(localStorageObj)
+    // for(let i=0; i<localStorageKeys.length; i++)
+    // {
+    //     const key = localStorageKeys[i]
+    //     const userDetailsString = localStorageObj[key]
+    //     const  userDetailsObj = JSON.parse(userDetailsString)
+    //     showNewUserOnScreen(userDetailsObj)
+    // }
+  });
+  
+  function showNewUserOnScreen(user) {
+    document.getElementById("experience").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("category").value = "";
+    if (localStorage.getItem(user._id) !== null) {
+      removeUserFromScreen(user.experience);
+    }
+    //const editDetails = [`${user._id}`, `${user.experience}`, `${user.description}`, `${user.category}`,]
+    const parentNode = document.getElementById("userList");
+    const childHTML = `<li id=${user._id}> ${user.experience} - ${user.description} 
+      <button style="margin: 10px 2px; background: green; color:white" onclick=editUser('${user._id}','${user.experience}','${user.description}','${user.category}')>Edit</button>
+      <button style="margin: 10px 2px" onclick=deleteUser('${user._id}')>Delete</button></li>`;
+    parentNode.innerHTML = parentNode.innerHTML + childHTML;
+  }
+  
+  // axios.put(`https://crudcrud.com/api/9bc94c1e99484d7ebd974aad3fa151c8/appointmentData/${userId}`)
+  //     .then((res) => {
+  
+  //         editUser(userId, experience, description, category)
+  //         console.log(res)
+  //     }
+  //     )
+  //     .catch(err => console.log(err))
+  async function editUser(userId, experience, description, category) {
+    try {
+      document.getElementById("experience").value = experience;
+      document.getElementById("description").value = description;
+      document.getElementById("category").value = category;
+      const obj = { experience, description, category };
+      let response = await axios.put(
+        `https://crudcrud.com/api/5092b59ed9814a54908880102ded62e5/appointmentData/${userId}`,
+        obj
+      );
+      if (response.status === 200) {
+        console.log(userId);
+        deleteUser(userId);
+      }
+    } catch (error) {
+      console.log(error.response.data.error);
+    }
+  
+    // document.getElementById('experience').value = experience;
+    // document.getElementById('description').value = description;
+    // document.getElementById('category').value = category;
+    // deleteUser(userId)
+  }
+  
+  async function deleteUser(obj) {
+    try {
+      let res = await axios.delete(
+        `https://crudcrud.com/api/5092b59ed9814a54908880102ded62e5/appointmentData/${obj}`
+      );
+      //console.log(obj)
+      if (res.status === 200) {
+        removeUserFromScreen(obj);
+      }
+    } catch (error) {
+      console.log(error.data);
+    }
+    // localStorage.removeItem(obj)
+    // removeUserFromScreen(obj)
+  }
+  
+  function removeUserFromScreen(obj) {
+    //console.log(obj)
+    const parentNode = document.getElementById("userList");
+    const childNodeToBeDeleted = document.getElementById(obj);
+    console.log(childNodeToBeDeleted, parentNode, obj);
+    if (childNodeToBeDeleted) {
+      parentNode.removeChild(childNodeToBeDeleted);
+    }
+  }
